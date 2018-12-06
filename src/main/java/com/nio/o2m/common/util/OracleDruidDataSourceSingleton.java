@@ -14,22 +14,22 @@ import com.nio.o2m.common.enums.DataBaseInfoEnum;
  *
  *
  */
-public class SingletonDruidDataSource extends DruidDataSource {
+public class OracleDruidDataSourceSingleton extends DruidDataSource {
     private static final long serialVersionUID = 8867673526666638692L;
     //
-    private volatile static  SingletonDruidDataSource instance;
+    private volatile static OracleDruidDataSourceSingleton instance;
 
     //私有构造函数。
-    private SingletonDruidDataSource() {
+    private OracleDruidDataSourceSingleton() {
             initBeforeNew();
     }
 
     //双重锁单例
-    public static SingletonDruidDataSource getInstance() {
+    public static OracleDruidDataSourceSingleton getInstance() {
         if(instance == null){
-            synchronized (SingletonDruidDataSource.class){
+            synchronized (OracleDruidDataSourceSingleton.class){
                 if(instance == null){
-                    instance = new SingletonDruidDataSource();
+                    instance = new OracleDruidDataSourceSingleton();
                 }
             }
         }
@@ -54,11 +54,11 @@ public class SingletonDruidDataSource extends DruidDataSource {
 
     //测试单例
     public static void main(String[] args) {
-        if (SingletonDruidDataSource.getInstance() == SingletonDruidDataSource.getInstance()) {
+        if (OracleDruidDataSourceSingleton.getInstance() == OracleDruidDataSourceSingleton.getInstance()) {
             System.out.println("this has implements singleton!");
         }
 
-        DruidDataSource dataSource = SingletonDruidDataSource.getInstance();
+        DruidDataSource dataSource = OracleDruidDataSourceSingleton.getInstance();
 
         try {
             //需要连接直接拿，需要关闭直接关闭。
