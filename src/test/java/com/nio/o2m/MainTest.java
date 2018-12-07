@@ -2,20 +2,22 @@ package com.nio.o2m;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.nio.o2m.common.enums.DataBaseInfoEnum;
-//import com.nio.o2m.common.util.ReadPropertiesFileUtil;
+import com.nio.o2m.common.util.ConnectionUtil;
+import com.nio.o2m.common.util.ReadPropertiesFileUtil;
 import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
+//import com.nio.o2m.common.util.ReadPropertiesFileUtil;
+
 public class MainTest {
 
-/*
     @Test
  public void testReadPropertiesFile() {
       String username = ReadPropertiesFileUtil.getValueInPropertiesFilesByKey("from.properties", "username");
         System.out.println(username);
-    }*/
+    }
 
 
     //这里仅仅是测试，将来我们肯定用单例来获取连接池。
@@ -47,7 +49,10 @@ public class MainTest {
 
     }
 
-
+    @Test
+    public void testConnectionUtil(){
+        System.out.println( ConnectionUtil.getConnection());
+    }
 
 
 
