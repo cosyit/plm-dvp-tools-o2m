@@ -2,7 +2,7 @@ package com.nio.o2m;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.nio.o2m.common.enums.DataBaseInfoEnum;
-import com.nio.o2m.common.util.ConnectionUtil;
+import com.nio.o2m.common.util.OracleConnectionUtil;
 import com.nio.o2m.common.util.ReadPropertiesFileUtil;
 import org.junit.Test;
 
@@ -35,7 +35,8 @@ public class MainTest {
         dataSource.setPassword(DataBaseInfoEnum.FROM_PASSWORD.getInfo());
         dataSource.setDriverClassName(DataBaseInfoEnum.FROM_DRIVERCLASS.getInfo());
         dataSource.setUrl(DataBaseInfoEnum.FROM_JDBCURL.getInfo());
-
+        System.out.println("--------------");
+        System.out.println(DataBaseInfoEnum.TO_JDBCURL.getInfo());
         try {
             connection =  dataSource.getConnection();
         } catch (SQLException e) {
@@ -51,7 +52,7 @@ public class MainTest {
 
     @Test
     public void testConnectionUtil(){
-        System.out.println( ConnectionUtil.getConnection());
+        System.out.println( OracleConnectionUtil.getOracleConnection());
     }
 
 

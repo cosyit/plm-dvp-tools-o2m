@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ConnectionUtil {
+public class OracleConnectionUtil {
 
     //为了事务控制，保证多并发时候，是同一个连接。线程隔离，用于事物的控制。
     private static ThreadLocal<Connection> connectionThreadLocal = new ThreadLocal<>();
 
-    public static Connection getConnection() {
+    public static Connection getOracleConnection() {
 
         //先从缓存Map中拿。利用当前的线程作为key，去拿值，值为Conn
         Connection conn = connectionThreadLocal.get();
@@ -144,7 +144,7 @@ public class ConnectionUtil {
         PreparedStatement ps = null;
 
         try {
-            con = getConnection();
+            con = getOracleConnection();
             ps = con.prepareStatement(sql);
             for (int i = 0; i < args.length; i++) {
                 ps.setObject(i + 1, args[i]);
@@ -166,7 +166,7 @@ public class ConnectionUtil {
         //所以是没法去进行实例化的，只能编译阶段引用可以，但是不能在运行阶段使用。
         T entity = null;
 
-        Connection con = getConnection();
+        Connection con = getOracleConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -221,7 +221,7 @@ public class ConnectionUtil {
 
     public static Map queryByAllFieldsSQL( String sql, Object... args) {
 
-        Connection con = getConnection();
+        Connection con = getOracleConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
 
@@ -261,19 +261,19 @@ public class ConnectionUtil {
         try {
             if (rs != null && !rs.isClosed()) rs.close();
         } catch (Exception e) {
-            Logger.getLogger(ConnectionUtil.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(OracleConnectionUtil.class.getName()).log(Level.SEVERE, null, e);
         }
 
         try {
             if (ps != null && !ps.isClosed()) ps.close();
         } catch (Exception e) {
-            Logger.getLogger(ConnectionUtil.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(OracleConnectionUtil.class.getName()).log(Level.SEVERE, null, e);
         }
 
         try {
             if (con != null && !con.isClosed()) con.close();
         } catch (Exception e) {
-            Logger.getLogger(ConnectionUtil.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(OracleConnectionUtil.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
