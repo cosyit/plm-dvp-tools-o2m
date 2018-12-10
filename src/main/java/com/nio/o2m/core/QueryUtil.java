@@ -11,9 +11,14 @@ import java.util.Map;
 
 public class QueryUtil {
     public static void main(String[] args) {
+        //前提：第零步：请在mysql 库中，按照oracle库的表结构，把表结构构造出来。
 
-        //       System.out.println(getDataBaseInfo());
+         System.out.println(getDataBaseInfo()); // 第一步：获取元数据的各个信息 并打包。
 
+        //第二步：将元数据的各个信息进行解析。
+
+
+/*
         String selectAllFieldsSQL = "select COMPANY_ID,COMPANY_NAME,COMPANY_SHORT_NAME,COMPANY_IS_ACTIVE,COMPANY_CREATE_DATE,COMPANY_DEFAULT_SITE,COMPANY_CODE,COMPANY_TYPE,COMPANY_GROUP from DX_COMPANY_TEMP";
         String tableName = "DX_COMPANY_TEMP";
 
@@ -28,7 +33,7 @@ public class QueryUtil {
         fields.add("COMPANY_TYPE");
         fields.add("COMPANY_GROUP");
 
-        o2mTransferRunner(tableName,selectAllFieldsSQL,fields);
+        o2mTransferRunner(tableName,selectAllFieldsSQL,fields);*/
 
     }
 
@@ -70,7 +75,7 @@ public class QueryUtil {
 
                 if(i%100 == 0){
                     //执行批量。
-                    executeManySql(tableList);
+                    executeManySql(tableList,tableName);
                     //清空内存
                     tableList.removeAll(tableList);
 
@@ -78,7 +83,7 @@ public class QueryUtil {
                 }
             }
 
-            executeManySql(tableList); // 最后一次未被整除的。
+            executeManySql(tableList,tableName); // 最后一次未被整除的。
 
 
             return tableList;
@@ -89,7 +94,7 @@ public class QueryUtil {
         }
     }
 
-    private static void executeManySql(List<List<String>> tableList) {
+    private static void executeManySql(List<List<String>> tableList,String tableName) {
        Connection mySQLConnection = MySQLConnectionUtil.getMySQLConnection();
         System.out.println("===============>"+mySQLConnection);
 
@@ -99,7 +104,8 @@ public class QueryUtil {
 
             PreparedStatement ps = null;
 
-            String tableName = "DX_COMPANY_TEMP";
+            //todo insert into sql 可以在第一次的时候，就构造出来。
+
            ps=  mySQLConnection.prepareStatement("insert into " + tableName + " values (?,?,?,?,?,?,?,?,?)");
 
             for (List<String> rowValueList : tableList) {
@@ -176,27 +182,38 @@ public class QueryUtil {
                 // 日志：开始拼接
                 oracleQuerySqlItem.append("select ");
 
+                //开始进行 mysql 中的插入语句的拼接。
+                StringBuffer mysqlInsertSqlItem = new StringBuffer();
+                mysqlInsertSqlItem.append("insert into "+tableName +" values (");
+
                 //因为我不知道，哪一个next()是最后一个next,因为在最后一个next的后面要特殊处理，不拼接 ","
                 StringBuffer fieldsStringBuffer = new StringBuffer();
+                StringBuffer fieldsStringBufferPsCron = new StringBuffer();
 
                 //在单表域中，进行循环可得到字段集。
                 ArrayList<String> fieldsItem = new ArrayList<>();
+
+
                 while (resultSetColumns.next()) {
                     //拿到表中的字段后，做2件事情，1，装到fields项 中。 2.同事拼接到查询sql.
                     String column_name = resultSetColumns.getString("column_name");
                     fieldsItem.add(column_name);
                     //把每个字段的
                     fieldsStringBuffer.append(column_name).append(",");
-                }
+                    fieldsStringBufferPsCron.append("?,");
+            }
 
                 oracleQuerySqlItem.append(fieldsStringBuffer.subSequence(0, fieldsStringBuffer.lastIndexOf(","))); //  fieldsStringBuffer.subSequence(0,fieldsStringBuffer.lastIndexOf(","));   效果如下 a,b,c,   ---> a,b,c
+
+                mysqlInsertSqlItem.append(fieldsStringBufferPsCron.subSequence(0,fieldsStringBufferPsCron.lastIndexOf(","))).append(")");
 
                 oracleQuerySqlItem.append(" from " + tableName);
                 //System.out.println(oracleQuerySqlItem); //打印 Oracle查询sql 项。
 
                 //sql 拼装完成。把这个table的信息总结一下。   日志：tableInfo总结完成，各项数据全部组装完成。装入结构体容器。
                 tableInfoItem.put("tableQuerySQL_FromOracle", oracleQuerySqlItem.toString());  // 目前通过metaData只封装了查询Oracle 数据库的一些表查询语句。
-                tableInfoItem.put("fields", fieldsItem);  // 目前通过metaData只封装了查询Oracle 数据库的一些表查询语句。 fixme : 还可以放其他有用的项。
+                tableInfoItem.put("fields", fieldsItem);  // 目前通过metaData只封装了查询Oracle 数据库的一些表查询语句。
+                tableInfoItem.put("mysqlInsertSqlItem", mysqlInsertSqlItem);  // 构造出查询语句，方便解析。 fixme : 还可以放其他有用的项。
 
                 //日志：上面的子Map包装成功。现在就开始把子结构体。装到
                 databaseInfo.put(tableName, tableInfoItem); //根据这个sql将来可以查询到所有表的各项数据的ResultSet.
