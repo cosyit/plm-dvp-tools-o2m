@@ -5,6 +5,7 @@ import com.nio.o2m.common.util.ReadPropertiesFileUtil;
 public enum DataBaseInfoEnum {
 
     FROM_FILENAME("from.properties"),
+//    FROM_FILENAME("mysql_test_from.properties"),
     TO_FILENAME("to.properties"),
 
     FROM_USERNAME(ReadPropertiesFileUtil.getValueInPropertiesFilesByKey(FROM_FILENAME.getInfo(), "username")),
