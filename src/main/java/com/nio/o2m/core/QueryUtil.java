@@ -11,30 +11,14 @@ import java.util.Map;
 
 public class QueryUtil {
     public static void main(String[] args) {
+
+        long start = System.currentTimeMillis();
         //前提：第零步：请在mysql 库中，按照oracle库的表结构，把表结构构造出来。
 
-         System.out.println(getDataBaseInfo()); // 第一步：获取元数据的各个信息 并打包。
+        Map<String, Map<String, Object>> dataBaseInfo = getDataBaseInfo();// 第一步：获取元数据的各个信息 并打包。
 
-        //第二步：将元数据的各个信息进行解析。
-
-
-/*
-        String selectAllFieldsSQL = "select COMPANY_ID,COMPANY_NAME,COMPANY_SHORT_NAME,COMPANY_IS_ACTIVE,COMPANY_CREATE_DATE,COMPANY_DEFAULT_SITE,COMPANY_CODE,COMPANY_TYPE,COMPANY_GROUP from DX_COMPANY_TEMP";
-        String tableName = "DX_COMPANY_TEMP";
-
-        ArrayList<String> fields = new ArrayList<>();
-        fields.add("COMPANY_ID");
-        fields.add("COMPANY_NAME");
-        fields.add("COMPANY_SHORT_NAME");
-        fields.add("COMPANY_IS_ACTIVE");
-        fields.add("COMPANY_CREATE_DATE");
-        fields.add("COMPANY_DEFAULT_SITE");
-        fields.add("COMPANY_CODE");
-        fields.add("COMPANY_TYPE");
-        fields.add("COMPANY_GROUP");
-
-        o2mTransferRunner(tableName,selectAllFieldsSQL,fields);*/
-
+       long end =  System.currentTimeMillis();
+        System.out.println("用时"+(end-start));
     }
 
 
@@ -45,7 +29,7 @@ public class QueryUtil {
      * @param selectAllFieldsSQL
      * @param fields
      */
-    public static List<List<String>>  o2mTransferRunner(String tableName ,String selectAllFieldsSQL,ArrayList<String> fields) {
+    public static void  o2mTransferRunner(String tableName ,String selectAllFieldsSQL,ArrayList<String> fields,String mysqlInsertSqlItem) {
         // 而已同一个连接可以搞定这些事情。使用多线程，用不同连接也可以搞定这些事情。所以传递一个链接对象进来。可以支持多线程。
         Connection connection = OracleConnectionUtil.getOracleConnection();
 
@@ -67,46 +51,40 @@ public class QueryUtil {
                 List<String> rowMinList = new ArrayList<>();
                 for (String field : fields) {
                     String fieldValue = rs.getString(field);//fields 还要抽出来，否则无法在这里对应。
-                    System.out.println(field + "======" + fieldValue);
                     rowMinList.add(fieldValue);
                 }
                 tableList.add(rowMinList);
                 i++;//一行遍历结束后，把计数器自增+1
 
-                if(i%100 == 0){
+                if(i%1000 == 0){
                     //执行批量。
-                    executeManySql(tableList,tableName);
+                    executeManySql(tableList,tableName,mysqlInsertSqlItem);
                     //清空内存
-                    tableList.removeAll(tableList);
+                    tableList.removeAll(tableList); //移除包含在此集合的元素。
 
                     System.out.println(i); //查看当前计数器的值。
                 }
             }
 
-            executeManySql(tableList,tableName); // 最后一次未被整除的。
-
-
-            return tableList;
-
+            executeManySql(tableList,tableName,mysqlInsertSqlItem); // 最后一次未被整除的。
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
     }
 
-    private static void executeManySql(List<List<String>> tableList,String tableName) {
+    private static void executeManySql(List<List<String>> tableList,String tableName,String mysqlInsertSqlItem) {
        Connection mySQLConnection = MySQLConnectionUtil.getMySQLConnection();
-        System.out.println("===============>"+mySQLConnection);
+       // System.out.println("===============>"+mySQLConnection);
 
         try{
 
             mySQLConnection.setAutoCommit(false);
 
-            PreparedStatement ps = null;
+            PreparedStatement ps;
 
             //todo insert into sql 可以在第一次的时候，就构造出来。
 
-           ps=  mySQLConnection.prepareStatement("insert into " + tableName + " values (?,?,?,?,?,?,?,?,?)");
+           ps=  mySQLConnection.prepareStatement(mysqlInsertSqlItem);
 
             for (List<String> rowValueList : tableList) {
                 for (int i = 0; i < rowValueList.size(); i++) {
@@ -213,10 +191,17 @@ public class QueryUtil {
                 //sql 拼装完成。把这个table的信息总结一下。   日志：tableInfo总结完成，各项数据全部组装完成。装入结构体容器。
                 tableInfoItem.put("tableQuerySQL_FromOracle", oracleQuerySqlItem.toString());  // 目前通过metaData只封装了查询Oracle 数据库的一些表查询语句。
                 tableInfoItem.put("fields", fieldsItem);  // 目前通过metaData只封装了查询Oracle 数据库的一些表查询语句。
-                tableInfoItem.put("mysqlInsertSqlItem", mysqlInsertSqlItem);  // 构造出查询语句，方便解析。 fixme : 还可以放其他有用的项。
+                tableInfoItem.put("mysqlInsertSqlItem", mysqlInsertSqlItem.toString());  // 构造出查询语句，方便解析。 fixme : 还可以放其他有用的项。
 
                 //日志：上面的子Map包装成功。现在就开始把子结构体。装到
                 databaseInfo.put(tableName, tableInfoItem); //根据这个sql将来可以查询到所有表的各项数据的ResultSet.
+                System.out.println("["+tableName + "]↓" );
+                System.out.println(oracleQuerySqlItem.toString());
+                System.out.println( mysqlInsertSqlItem.toString());
+                System.out.println();
+
+
+                o2mTransferRunner(tableName,oracleQuerySqlItem.toString(),fieldsItem,mysqlInsertSqlItem.toString());
             }
         } catch (SQLException e) {
             e.printStackTrace();
