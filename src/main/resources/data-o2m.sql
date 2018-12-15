@@ -2,6 +2,91 @@
 /*           TODO 第一步：mysql库中 高仿  Oracle 数据库          */
 /*==============================================================*/
 
+
+/*  cmd ====   mysql -h 10.110.3.247 -P3306 -udataexchangeuser -p   Ldda98Edda2
+use plm_portal_dataexchange_qa
+*/
+
+drop table if exists `DX_ALM`;
+create table  `DX_ALM` (
+`ID` VARCHAR (50),
+`TITLE` VARCHAR(200),
+`REVISION` numeric,
+`DOC_OWNER` varchar(80),
+`EXPORT_TO` varchar(80),
+`COMMENTS` varchar(200),
+`DX_ID` varchar(50),
+`EXPORT_STATUS` numeric comment '导出状态',
+`SEND_STATUS` numeric comment '发送状态',
+`REVEIVED_STATUS` numeric comment '接受状态'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `DX_ALM` WRITE;
+UNLOCK TABLES;
+
+
+
+drop table if exists `DX_CA_EXCEPTION`;
+create table  `DX_CA_EXCEPTION` (
+   `EX_CANUMBER`          varchar(100),
+   `EX_FOLDER_NAME`       varchar(200),
+   `EX_SUPP_CONTACT_PERSON_EMAI` varchar(200),
+   `EX_CA_OWNER_EMAIL`    varchar(200),
+   `EX_EXCEPTION_DETAIL`  text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `DX_CA_EXCEPTION` WRITE;
+UNLOCK TABLES;
+
+
+drop table if exists `DX_DEPARTMENT`;
+create table  `DX_DEPARTMENT` (
+   `ID`                   numeric not null,
+   `DEPARTMENT_NAME`      varchar(500)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `DX_DEPARTMENT` WRITE;
+UNLOCK TABLES;
+
+
+drop table if exists `DX_DX_DEMAND_APPROVER`;
+create table  `DX_DX_DEMAND_APPROVER` (
+   `DDA_USER_ID`          numeric,
+   `DDA_APPROVE_DATE`     datetime,
+   `DDA_DX_ID`            numeric,
+   `DDA_STATE`            numeric,
+   `DDA_APPROVE_CODE`     varchar(20)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `DX_DX_DEMAND_APPROVER` WRITE;
+UNLOCK TABLES;
+
+
+drop table if exists `DX_EXPORT_ERROR_CHECK`;
+create table  `DX_EXPORT_ERROR_CHECK` (
+   `TIME`                 varchar(32),
+   `ERROR_PART`           varchar(20),
+   `ERROR_CA`             varchar(20),
+   `ALERT_LIST`           varchar(256),
+   `DAY`                  varchar(32),
+   `HOUR`                 varchar(32)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `DX_EXPORT_ERROR_CHECK` WRITE;
+UNLOCK TABLES;
+
+
+drop table if exists `DX_USERDEPARTMENT_RELATION`;
+create table  `DX_USERDEPARTMENT_RELATION` (
+   `USER_ID`              numeric,
+   `DEPARTMENT_ID`        numeric
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `DX_USERDEPARTMENT_RELATION` WRITE;
+UNLOCK TABLES;
+
+
+
 DROP TABLE IF EXISTS `dx_ca_data_management_export`;
 /*==============================================================*/
 /* Table01: DX_CA_DATA_MANAGEMENT_EXPORT                          */
@@ -86,23 +171,25 @@ DROP TABLE IF EXISTS `dx_ca_info_other`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `dx_ca_info_other` (
-  `CA_NUMBER` text,
-  `CA_PART_NUMBER` text,
-  `CA_PART_REVISION_ID` text,
-  `CA_CAD_REVISION_ID` text,
-  `CA_PART_EXPORT_STATUS` text,
-  `CA_ERROR_LOG` text,
-  `CA_PART_EXTERNAL_ID` text,
-  `CA_PART_EXPORT_START_TIME` text,
-  `CA_PART_PROCESS_NAME` text,
-  `CA_PART_EXPORT_FORMAT` text,
-  `CA_PART_TEMP_FLODER` text,
-  `JOB_OWNER_EMAIL` varchar(128) DEFAULT NULL,
-  `CA_PART_OWNER` varchar(128) DEFAULT NULL,
-  `EXPORT_RESULT` varchar(32) DEFAULT NULL,
-  `EXPORT_FOLDER` text,
-  `EXPORT_SERVER` varchar(100) DEFAULT NULL,
-  `CA_PART_STATUS` varchar(128) DEFAULT NULL
+   `CA_NUMBER`            varchar(100),
+   `CA_PART_NUMBER`       varchar(100),
+   `CA_PART_REVISION_ID`  varchar(100),
+   `CA_CAD_REVISION_ID`   varchar(100),
+   `CA_PART_EXPORT_STATUS` varchar(1000),
+   `CA_ERROR_LOG`         varchar(500),
+   `CA_PART_EXTERNAL_ID`  varchar(512),
+   `CA_PART_EXPORT_START_TIME` varchar(1024),
+   `CA_PART_PROCESS_NAME` varchar(1024),
+   `CA_PART_EXPORT_FORMAT` varchar(1024),
+   `CA_PART_TEMP_FLODER`  varchar(1024),
+   `JOB_OWNER_EMAIL`      varchar(512),
+   `CA_PART_OWNER`        varchar(512),
+   `EXPORT_RESULT`        varchar(512),
+   `EXPORT_FOLDER`        varchar(512),
+   `EXPORT_SERVER`        varchar(512),
+   `CA_PART_STATUS`       varchar(32),
+   `CA_PART_FAILED`       varchar(16),
+   `CA_PART_ALERT`        varchar(16)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -689,15 +776,14 @@ CREATE TABLE `dx_rolepermission_relation` (
   `ROLEPERM_ROLE_ID` int DEFAULT NULL,
   `ROLEPERM_PERMISSION_ID` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 --
 -- Dumping data for table `dx_rolepermission_relation`
 --
 
 LOCK TABLES `dx_rolepermission_relation` WRITE;
-/*!40000 ALTER TABLE `dx_rolepermission_relation` DISABLE KEYS */;
-/*!40000 ALTER TABLE `dx_rolepermission_relation` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
 --
@@ -750,7 +836,8 @@ CREATE TABLE `dx_user` (
   `USER_LAST_LOGIN_DATE` datetime DEFAULT NULL,
   `USER_CODENAME` varchar(150) DEFAULT NULL,
   `USER_NAME_CH` varchar(64) DEFAULT NULL,
-  `USER_NAME_EN` varchar(64) DEFAULT NULL
+  `USER_NAME_EN` varchar(64) DEFAULT NULL,
+   `USER_DEFAULT_SITE` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

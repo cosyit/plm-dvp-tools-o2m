@@ -11,25 +11,22 @@ import java.util.Map;
 
 public class QueryUtil {
     public static void main(String[] args) {
-
         long start = System.currentTimeMillis();
         //前提：第零步：请在mysql 库中，按照oracle库的表结构，把表结构构造出来。
-
         Map<String, Map<String, Object>> dataBaseInfo = getDataBaseInfo();// 第一步：获取元数据的各个信息 并打包。
-
-       long end =  System.currentTimeMillis();
-        System.out.println("用时"+(end-start));
+        long end = System.currentTimeMillis();
+        System.out.println("用时" + (end - start));
     }
 
 
-
     /**
-     *单表粒度的转换
+     * 单表粒度的转换
+     *
      * @param tableName
      * @param selectAllFieldsSQL
      * @param fields
      */
-    public static void  o2mTransferRunner(String tableName ,String selectAllFieldsSQL,ArrayList<String> fields,String mysqlInsertSqlItem) {
+    public static void o2mTransferRunner(String tableName, String selectAllFieldsSQL, ArrayList<String> fields, String mysqlInsertSqlItem) {
         // 而已同一个连接可以搞定这些事情。使用多线程，用不同连接也可以搞定这些事情。所以传递一个链接对象进来。可以支持多线程。
         Connection connection = OracleConnectionUtil.getOracleConnection();
 
@@ -45,7 +42,7 @@ public class QueryUtil {
             rs = ps.executeQuery();
 
             //设置一个做批量的计算器。
-            int i= 0;
+            int i = 0;
             while (rs.next()) {
                 //一行上的结果
                 List<String> rowMinList = new ArrayList<>();
@@ -56,9 +53,9 @@ public class QueryUtil {
                 tableList.add(rowMinList);
                 i++;//一行遍历结束后，把计数器自增+1
 
-                if(i%1000 == 0){
+                if (i % 1000 == 0) {
                     //执行批量。
-                    executeManySql(tableList,tableName,mysqlInsertSqlItem);
+                    executeManySql(tableList, tableName, mysqlInsertSqlItem);
                     //清空内存
                     tableList.removeAll(tableList); //移除包含在此集合的元素。
 
@@ -66,17 +63,17 @@ public class QueryUtil {
                 }
             }
 
-            executeManySql(tableList,tableName,mysqlInsertSqlItem); // 最后一次未被整除的。
+            executeManySql(tableList, tableName, mysqlInsertSqlItem); // 最后一次未被整除的。
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void executeManySql(List<List<String>> tableList,String tableName,String mysqlInsertSqlItem) {
-       Connection mySQLConnection = MySQLConnectionUtil.getMySQLConnection();
-       // System.out.println("===============>"+mySQLConnection);
+    private static void executeManySql(List<List<String>> tableList, String tableName, String mysqlInsertSqlItem) {
+        Connection mySQLConnection = MySQLConnectionUtil.getMySQLConnection();
+        // System.out.println("===============>"+mySQLConnection);
 
-        try{
+        try {
 
             mySQLConnection.setAutoCommit(false);
 
@@ -84,7 +81,7 @@ public class QueryUtil {
 
             //todo insert into sql 可以在第一次的时候，就构造出来。
 
-           ps=  mySQLConnection.prepareStatement(mysqlInsertSqlItem);
+            ps = mySQLConnection.prepareStatement(mysqlInsertSqlItem);
 
             for (List<String> rowValueList : tableList) {
                 for (int i = 0; i < rowValueList.size(); i++) {
@@ -100,9 +97,9 @@ public class QueryUtil {
 
             //
             mySQLConnection.commit();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             MySQLConnectionUtil.closeConnectionWhenHasTransactionOpration();
         }
     }
@@ -145,6 +142,8 @@ public class QueryUtil {
             //子结构 --- 关于每张表的结构体。
             Map<String, Object> tableInfoItem = new HashMap<>();  // n 个 [tableName === oracleQuerySql]
             while (resultSetOfTables.next()) {
+
+
                 //循环表的时候，得到表名
                 String tableName = resultSetOfTables.getString("TABLE_NAME");
 
@@ -162,7 +161,7 @@ public class QueryUtil {
 
                 //开始进行 mysql 中的插入语句的拼接。
                 StringBuffer mysqlInsertSqlItem = new StringBuffer();
-                mysqlInsertSqlItem.append("insert into "+tableName +" values (");
+                mysqlInsertSqlItem.append("insert into " + tableName + " values (");
 
                 //因为我不知道，哪一个next()是最后一个next,因为在最后一个next的后面要特殊处理，不拼接 ","
                 StringBuffer fieldsStringBuffer = new StringBuffer();
@@ -179,11 +178,11 @@ public class QueryUtil {
                     //把每个字段的
                     fieldsStringBuffer.append(column_name).append(",");
                     fieldsStringBufferPsCron.append("?,");
-            }
+                }
 
                 oracleQuerySqlItem.append(fieldsStringBuffer.subSequence(0, fieldsStringBuffer.lastIndexOf(","))); //  fieldsStringBuffer.subSequence(0,fieldsStringBuffer.lastIndexOf(","));   效果如下 a,b,c,   ---> a,b,c
 
-                mysqlInsertSqlItem.append(fieldsStringBufferPsCron.subSequence(0,fieldsStringBufferPsCron.lastIndexOf(","))).append(")");
+                mysqlInsertSqlItem.append(fieldsStringBufferPsCron.subSequence(0, fieldsStringBufferPsCron.lastIndexOf(","))).append(")");
 
                 oracleQuerySqlItem.append(" from " + tableName);
                 //System.out.println(oracleQuerySqlItem); //打印 Oracle查询sql 项。
@@ -195,13 +194,15 @@ public class QueryUtil {
 
                 //日志：上面的子Map包装成功。现在就开始把子结构体。装到
                 databaseInfo.put(tableName, tableInfoItem); //根据这个sql将来可以查询到所有表的各项数据的ResultSet.
-                System.out.println("["+tableName + "]↓" );
+
+
+                System.out.println("[" + tableName + "]↓");
                 System.out.println(oracleQuerySqlItem.toString());
-                System.out.println( mysqlInsertSqlItem.toString());
+                System.out.println(mysqlInsertSqlItem.toString());
                 System.out.println();
 
 
-                o2mTransferRunner(tableName,oracleQuerySqlItem.toString(),fieldsItem,mysqlInsertSqlItem.toString());
+                o2mTransferRunner(tableName, oracleQuerySqlItem.toString(), fieldsItem, mysqlInsertSqlItem.toString());
             }
         } catch (SQLException e) {
             e.printStackTrace();
